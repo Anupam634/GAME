@@ -24,7 +24,7 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
         console.log("Starting Phantom detection");
         const detectPhantom = async () => {
             let attempts = 0;
-            const maxAttempts = 60; // 30 seconds
+            const maxAttempts = 20; // 10 seconds
             const checkPhantom = () => {
                 console.log(`Check attempt ${attempts + 1}/${maxAttempts}, window.solana:`, !!window.solana, "isPhantom:", window.solana?.isPhantom);
                 if (window.solana?.isPhantom) {
@@ -32,12 +32,12 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
                     setIsPhantomDetected(true);
                     return true;
                 }
-                if (attempts < maxAttempts) {
-                    attempts++;
+                if (attempts >= maxAttempts) {
+                    console.log("Phantom not detected after retries");
+                    setIsPhantomDetected(false);
                     return false;
                 }
-                console.log("Phantom not detected after retries");
-                setIsPhantomDetected(false);
+                attempts++;
                 return false;
             };
 
@@ -59,7 +59,7 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
         const matchedWallet = wallets.find((w) => w.adapter.name === walletName);
         if (!matchedWallet?.adapter) {
             console.error(`Wallet ${walletName} not found`);
-            alert(`${walletName} wallet not found. Please try again.`);
+            alert(`Wallet ${walletName} not found. Please try again.`);
             return;
         }
 
@@ -68,10 +68,7 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
             try {
                 setIsConnecting(true);
                 console.log("Initiating Phantom mobile connection");
-                const isLocalNetwork = window.location.hostname.includes("10.57.49.109") || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-                const redirectUrl = isLocalNetwork
-                    ? encodeURIComponent("https://game-jef5.vercel.app/")
-                    : encodeURIComponent(window.location.href);
+                const redirectUrl = encodeURIComponent("https://game-jef5.vercel.app");
                 const phantomDeepLink = `https://phantom.app/ul/v1/connect?app_url=${redirectUrl}&cluster=devnet`;
                 console.log("Deep link:", phantomDeepLink);
                 sessionStorage.setItem("phantom_connect", "pending");
@@ -79,14 +76,14 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
 
                 // Poll for connection
                 let attempts = 0;
-                const maxAttempts = 80; // 80 seconds
+                const maxAttempts = 40; // 40 seconds
                 const checkConnection = async () => {
                     console.log(`Mobile connection check, attempt ${attempts + 1}/${maxAttempts}`);
                     if (attempts >= maxAttempts) {
                         console.error("Mobile connection timeout");
                         sessionStorage.removeItem("phantom_connect");
                         alert(
-                            "Failed to connect Phantom wallet. Ensure the Phantom app is installed and updated to the latest version, approve the connection, and verify the ngrok URL (https://573959babe96.ngrok-free.app) is accessible."
+                            "Failed to connect Phantom wallet. Ensure the Phantom app is installed and updated to ~25.10.x, approve the connection in the app, and verify the URL (https://game-jef5.vercel.app) is accessible. Try using Chrome or Safari, and contact Phantom support at https://support.phantom.app if issues persist."
                         );
                         setIsConnecting(false);
                         return;
@@ -115,7 +112,7 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
             } catch (error) {
                 console.error("Mobile connection failed:", error);
                 sessionStorage.removeItem("phantom_connect");
-                alert("Failed to connect Phantom wallet. Ensure the Phantom app is installed and updated, then try again.");
+                alert("Failed to connect Phantom wallet. Ensure the Phantom app (~25.10.x) is installed and updated, then try again in Chrome or Safari.");
                 setIsConnecting(false);
             }
             return;
@@ -124,13 +121,13 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
         // Desktop logic
         if (walletName === "Phantom" && isPhantomDetected === false) {
             console.error("Phantom extension not detected");
-            alert("Phantom wallet extension not installed or not detected. Clear browser cookies, ensure the extension is enabled, or try another browser (e.g., Chrome, Firefox).");
+            alert("Phantom wallet extension not installed or detected. Install Phantom (~25.10.x) from https://phantom.app, clear browser cookies, ensure the extension is enabled, and try in Chrome or Firefox.");
             return;
         }
 
         if (isPhantomDetected === null) {
             console.log("Phantom detection in progress");
-            alert("Phantom detection is in progress. Please wait a moment and try again.");
+            alert("Phantom detection is in progress. Please wait and try again.");
             return;
         }
 
@@ -147,7 +144,7 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
             setShowWalletSelectPopup(false);
         } catch (error) {
             console.error("Desktop connection error:", error);
-            alert("Failed to connect Phantom wallet. Clear browser cookies, ensure the extension is enabled, and try again.");
+            alert("Failed to connect Phantom wallet. Clear browser cookies, ensure the Phantom extension (~25.10.x) is enabled, disable ad blockers, and try in Chrome or Firefox.");
         } finally {
             setIsConnecting(false);
         }
@@ -170,17 +167,15 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
                 <div className="md:w-1/2 flex flex-col gap-4 justify-center items-start">
                     <h2 className="text-2xl md:text-4xl font-bold text-light mb-2">Connect Wallet & Continue</h2>
                     <div className="mb-4 md:mb-6 flex items-center gap-3 text-left">
-                        <div className="mt-1">
-                            <input
-                                type="checkbox"
-                                id="terms-checkbox"
-                                checked={isTermsAccepted}
-                                onChange={(e) => setIsTermsAccepted(e.target.checked)}
-                                className="w-5 h-5 accent-neon-pink cursor-pointer"
-                            />
-                        </div>
+                        <input
+                            type="checkbox"
+                            id="terms-checkbox"
+                            checked={isTermsAccepted}
+                            onChange={(e) => setIsTermsAccepted(e.target.checked)}
+                            className="w-5 h-5 accent-neon-pink cursor-pointer"
+                        />
                         <div className="text-sm text-soft">
-                            I confirm that I have read, understood, and that I accept the{" "}
+                            I confirm that I have read, understood, and accept the{" "}
                             <span className="text-neon-pink underline cursor-pointer hover:text-neon-pink/80">
                                 Terms of Service
                             </span>
@@ -197,6 +192,11 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
                     >
                         <span className="text-base md:text-lg">{isConnecting ? "Connecting..." : "Connect"}</span>
                     </button>
+                    {isConnecting && (
+                        <div className="text-center text-soft mt-2">
+                            Connecting to Phantom... Please approve in the app or extension.
+                        </div>
+                    )}
                 </div>
             </div>
 

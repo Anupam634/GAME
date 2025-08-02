@@ -10,12 +10,19 @@ import { useMemo, useEffect } from "react";
 
 export const WalletContextProvider = ({ children }: { children: React.ReactNode }) => {
     const network = WalletAdapterNetwork.Devnet;
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    const endpoint = useMemo(() => {
+        try {
+            return clusterApiUrl(network);
+        } catch (error) {
+            console.error("Failed to get Solana Devnet RPC:", error);
+            return "https://api.devnet.solana.com"; // Fallback RPC
+        }
+    }, [network]);
 
     const wallets = useMemo(() => {
         console.log("Initializing PhantomWalletAdapter");
         return [new PhantomWalletAdapter()];
-    }, [network]);
+    }, []);
 
     // Log Phantom detection
     useEffect(() => {
