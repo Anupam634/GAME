@@ -70,7 +70,7 @@ const ConnectStep = ({ onWalletSelect }: ConnectStepProps) => {
                 console.log("Initiating Phantom mobile connection");
                 const isLocalNetwork = window.location.hostname.includes("10.57.49.109") || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
                 const redirectUrl = isLocalNetwork
-                    ? encodeURIComponent("https://game-w1s5.vercel.app")
+                    ? encodeURIComponent("https://game-jef5.vercel.app/")
                     : encodeURIComponent(window.location.href);
                 const phantomDeepLink = `https://phantom.app/ul/v1/connect?app_url=${redirectUrl}&cluster=devnet`;
                 console.log("Deep link:", phantomDeepLink);
